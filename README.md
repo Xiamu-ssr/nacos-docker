@@ -19,3 +19,14 @@ test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u", "root", "-p${MYSQL
 
 #### 4.运行
 在根目录运行`docker-compose -f example/cluster-hostname.yaml up`
+
+## nginx反向代理，负载均衡
+```bash
+docker run -id --name=nacos_nginx_master ^
+-p 80:80 ^
+-v C:\Users\mumu\IdeaProjects\nacos-docker\nginx\nginx_master\conf\nginx.conf:/etc/nginx/nginx.conf ^
+-v C:\Users\mumu\IdeaProjects\nacos-docker\nginx\nginx_master\logs:/var/log/nginx ^
+-v C:\Users\mumu\IdeaProjects\nacos-docker\nginx\nginx_master\html:/usr/share/nginx/html ^
+--network example_default ^
+nginx:1.19.0
+```
