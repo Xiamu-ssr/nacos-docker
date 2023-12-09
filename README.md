@@ -22,11 +22,12 @@ test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u", "root", "-p${MYSQL
 
 ## nginx反向代理，负载均衡
 ```bash
-docker run -id --name=nacos_nginx_master ^
+docker run -id --name=nacos_nginx ^
 -p 80:80 ^
--v C:\Users\mumu\IdeaProjects\nacos-docker\nginx\nginx_master\conf\nginx.conf:/etc/nginx/nginx.conf ^
--v C:\Users\mumu\IdeaProjects\nacos-docker\nginx\nginx_master\logs:/var/log/nginx ^
--v C:\Users\mumu\IdeaProjects\nacos-docker\nginx\nginx_master\html:/usr/share/nginx/html ^
+-v C:\Users\mumu\IdeaProjects\nacos-docker\nginx\nginx.conf:/etc/nginx/nginx.conf ^
+-v C:\Users\mumu\IdeaProjects\nacos-docker\nginx\conf.d\default.conf:/etc/nginx/conf.d/default.conf ^
+-v C:\Users\mumu\IdeaProjects\nacos-docker\nginx\logs:/var/log/nginx ^
+-v C:\Users\mumu\IdeaProjects\nacos-docker\nginx\html:/usr/share/nginx/html ^
 --network example_default ^
-nginx:1.19.0
+nginx:stable
 ```
