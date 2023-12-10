@@ -28,6 +28,6 @@ docker run -id --name=nacos_nginx ^
 -v C:\Users\mumu\IdeaProjects\nacos-docker\nginx\conf.d\default.conf:/etc/nginx/conf.d/default.conf ^
 -v C:\Users\mumu\IdeaProjects\nacos-docker\nginx\logs:/var/log/nginx ^
 -v C:\Users\mumu\IdeaProjects\nacos-docker\nginx\html:/usr/share/nginx/html ^
---network example_default ^
+--network nacos_cluster_nacos_cluster ^
 nginx:stable
 ```

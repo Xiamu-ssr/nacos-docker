@@ -1,5 +1,33 @@
 version: "3.8"
+name: nacos_cluster
+networks:
+  nacos_cluster:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.29.0.0/24
 services:
+  mysql:
+    container_name: mysql
+    build:
+      context: .
+      dockerfile: ./image/mysql/5.7/Dockerfile
+    image: example/mysql:5.7
+    env_file:
+      - ../env/mysql.env
+    volumes:
+      - ./mysql:/var/lib/mysql
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    networks:
+      nacos_cluster:
+        ipv4_address: 172.29.0.2
   nacos1:
     hostname: nacos1
     container_name: nacos1
@@ -17,6 +45,9 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+    networks:
+      nacos_cluster:
+        ipv4_address: 172.29.0.3
 
   nacos2:
     hostname: nacos2
@@ -35,6 +66,9 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+    networks:
+      nacos_cluster:
+        ipv4_address: 172.29.0.4
   nacos3:
     hostname: nacos3
     image: nacos/nacos-server:${NACOS_VERSION}
@@ -52,21 +86,6 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-  mysql:
-    container_name: mysql
-    build:
-      context: .
-      dockerfile: ./image/mysql/5.7/Dockerfile
-    image: example/mysql:5.7
-    env_file:
-      - ../env/mysql.env
-    volumes:
-      - ./mysql:/var/lib/mysql
-    ports:
-      - "3307:3306"
-    healthcheck:
-      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}" ]
-      interval: 10s
-      timeout: 10s
-      retries: 10
-
+    networks:
+      nacos_cluster:
+        ipv4_address: 172.29.0.5
