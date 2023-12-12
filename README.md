@@ -4,7 +4,7 @@ Nacos Docker仓库
 #### 1. 修改.env<br/>
 ```
 # example/.env
-NACOS_VERSION=1.4.2
+NACOS_VERSION=v2.3.0
 MYSQL_ROOT_PASSWORD=1009
 ```
 为了正确载入compose.yaml中的${}变量
@@ -19,15 +19,3 @@ test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u", "root", "-p${MYSQL
 
 #### 4.运行
 在根目录运行`docker-compose -f example/cluster-hostname.yaml up`
-
-## nginx反向代理，负载均衡
-```bash
-docker run -id --name=nacos_nginx ^
--p 80:80 ^
--v C:\Users\mumu\IdeaProjects\nacos-docker\nginx\nginx.conf:/etc/nginx/nginx.conf ^
--v C:\Users\mumu\IdeaProjects\nacos-docker\nginx\conf.d\default.conf:/etc/nginx/conf.d/default.conf ^
--v C:\Users\mumu\IdeaProjects\nacos-docker\nginx\logs:/var/log/nginx ^
--v C:\Users\mumu\IdeaProjects\nacos-docker\nginx\html:/usr/share/nginx/html ^
---network nacos_cluster_nacos_cluster ^
-nginx:stable
-```

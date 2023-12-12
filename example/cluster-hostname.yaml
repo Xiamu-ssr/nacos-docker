@@ -8,8 +8,8 @@ networks:
       config:
         - subnet: 172.29.0.0/24
 services:
-  mysql:
-    container_name: mysql
+  mysql_nacos: #nacos的mysql
+    container_name: mysql_nacos
     build:
       context: .
       dockerfile: ./image/mysql/5.7/Dockerfile
@@ -41,9 +41,9 @@ services:
       - "9850:9849"
     env_file:
       - ../env/nacos-hostname.env
-    restart: always
+#    restart: always
     depends_on:
-      mysql:
+      mysql_nacos:
         condition: service_healthy
     networks:
       nacos_cluster:
@@ -62,9 +62,9 @@ services:
       - "9851:9849"
     env_file:
       - ../env/nacos-hostname.env
-    restart: always
+#    restart: always
     depends_on:
-      mysql:
+      mysql_nacos:
         condition: service_healthy
     networks:
       nacos_cluster:
@@ -82,10 +82,28 @@ services:
       - "9852:9849"
     env_file:
       - ../env/nacos-hostname.env
-    restart: always
+#    restart: always
     depends_on:
-      mysql:
+      mysql_nacos:
         condition: service_healthy
     networks:
       nacos_cluster:
         ipv4_address: 172.29.0.5
+  nginx_nacos: #nginx反向代理3个nacos
+    hostname: nginx_nacos
+    image: nginx:stable
+    container_name: nginx_nacos
+    volumes:
+      - ../nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ../nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
+      - ../nginx/logs:/var/log/nginx
+      - ../nginx/html:/usr/share/nginx/html
+    ports:
+      - "80:80"
+    depends_on:
+      - nacos1
+      - nacos2
+      - nacos3
+    networks:
+      nacos_cluster:
+        ipv4_address: 172.29.0.6

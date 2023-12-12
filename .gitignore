@@ -1,4 +1,7 @@
 .idea
 /example/cluster-logs/*
 /example/mysql
-/nginx/logs/*
+/mysql_service/data
+/nginx_nacos/logs/*
+
+*.jar

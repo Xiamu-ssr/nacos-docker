@@ -1,0 +1,180 @@
+version: "3.8"
+name: nacos_cluster
+networks:
+  nacos_cluster:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.29.0.0/24
+services:
+  #nacos的mysql
+  mysql_nacos:
+    container_name: mysql_nacos
+    build:
+      context: .
+      dockerfile: ./image/mysql/5.7/Dockerfile
+    image: example/mysql:5.7
+    env_file:
+      - ../env/mysql.env
+    volumes:
+      - ./mysql:/var/lib/mysql
+#    ports:
+#      - "3307:3306"
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    networks:
+      nacos_cluster:
+        ipv4_address: 172.29.0.2
+
+  nacos1:
+    hostname: nacos1
+    container_name: nacos1
+    image: nacos/nacos-server:${NACOS_VERSION}
+    volumes:
+      - ./cluster-logs/nacos1:/home/nacos/logs
+#    ports:
+#      - "7848:7848"
+#      - "8845:8848"
+#      - "9868:9848"
+#      - "9850:9849"
+    env_file:
+      - ../env/nacos-hostname.env
+#    restart: always
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8848/nacos/v1/console/health/readiness" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    depends_on:
+      mysql_nacos:
+        condition: service_healthy
+    networks:
+      nacos_cluster:
+        ipv4_address: 172.29.0.3
+
+  nacos2:
+    hostname: nacos2
+    image: nacos/nacos-server:${NACOS_VERSION}
+    container_name: nacos2
+    volumes:
+      - ./cluster-logs/nacos2:/home/nacos/logs
+#    ports:
+#      - "7849:7848"
+#      - "8846:8848"
+#      - "9869:9848"
+#      - "9851:9849"
+    env_file:
+      - ../env/nacos-hostname.env
+#    restart: always
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8848/nacos/v1/console/health/readiness" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    depends_on:
+      mysql_nacos:
+        condition: service_healthy
+    networks:
+      nacos_cluster:
+        ipv4_address: 172.29.0.4
+
+  nacos3:
+    hostname: nacos3
+    image: nacos/nacos-server:${NACOS_VERSION}
+    container_name: nacos3
+    volumes:
+      - ./cluster-logs/nacos3:/home/nacos/logs
+#    ports:
+#      - "7850:7848"
+#      - "8847:8848"
+#      - "9870:9848"
+#      - "9852:9849"
+    env_file:
+      - ../env/nacos-hostname.env
+#    restart: always
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8848/nacos/v1/console/health/readiness" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    depends_on:
+      mysql_nacos:
+        condition: service_healthy
+    networks:
+      nacos_cluster:
+        ipv4_address: 172.29.0.5
+
+  #nginx反向代理3个nacos
+  nginx_nacos:
+    hostname: nginx_nacos
+    image: nginx:stable
+    container_name: nginx_nacos
+    volumes:
+      - ../nginx_nacos/nginx.conf:/etc/nginx/nginx.conf
+      - ../nginx_nacos/conf.d/default.conf:/etc/nginx/conf.d/default.conf
+      - ../nginx_nacos/logs:/var/log/nginx
+      - ../nginx_nacos/html:/usr/share/nginx/html
+    ports:
+      - "80:80"
+    depends_on:
+      nacos1:
+        condition: service_healthy
+      nacos2:
+        condition: service_healthy
+      nacos3:
+        condition: service_healthy
+    networks:
+      nacos_cluster:
+        ipv4_address: 172.29.0.6
+
+  #service的mysql
+  mysql_service:
+    hostname: mysql_service
+    image: mysql:5.7
+    container_name: mysql_service
+    environment:
+      - MYSQL_ROOT_PASSWORD=1009
+#    ports:
+#      - "3306:3306"
+    volumes:
+      - ../mysql_service/data:/var/lib/mysql  # 把MySQL的数据映射到宿主机
+      - ../mysql_service/init_sql/cloud-order.sql:/docker-entrypoint-initdb.d/init1.sql  # 执行第一个初始SQL文件
+      - ../mysql_service/init_sql/cloud-user.sql:/docker-entrypoint-initdb.d/init2.sql  # 执行第二个初始SQL文件
+    restart: always
+    networks:
+      nacos_cluster:
+        ipv4_address: 172.29.0.100
+
+  userservice:
+    build: ../services/userservice
+    depends_on:
+      - mysql_service
+      - nginx_nacos
+    networks:
+      nacos_cluster:
+        ipv4_address: 172.29.0.101
+
+  orderservice:
+    build: ../services/orderservice
+    depends_on:
+      - mysql_service
+      - nginx_nacos
+    networks:
+      nacos_cluster:
+        ipv4_address: 172.29.0.102
+
+  gateway:
+    build: ../services/gateway
+    ports:
+      - "10010:10010"
+    depends_on:
+      - orderservice
+      - userservice
+      - nginx_nacos
+    networks:
+      nacos_cluster:
+        ipv4_address: 172.29.0.103
